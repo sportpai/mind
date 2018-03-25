@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.starcor.admin.dao.SysOperateMapper" >
+  <resultMap id="BaseResultMap" type="com.starcor.admin.model.SysOperate" >
+    <id column="evs_id" property="id" jdbcType="VARCHAR" />
+    <result column="evs_menu_id" property="menuId" jdbcType="VARCHAR" />
+    <result column="evs_name" property="name" jdbcType="VARCHAR" />
+    <result column="evs_code" property="code" jdbcType="VARCHAR" />
+    <result column="evs_sys_operate" property="sysOperate" jdbcType="TINYINT" />
+    <result column="evs_auth_type" property="authType" jdbcType="TINYINT" />
+    <result column="evs_status" property="status" jdbcType="TINYINT" />
+    <result column="evs_in_user" property="inUser" jdbcType="VARCHAR" />
+    <result column="evs_in_date" property="inDate" jdbcType="BIGINT" />
+    <result column="evs_last_edit_time" property="lastEditTime" jdbcType="BIGINT" />
+    <result column="evs_last_edit_user" property="lastEditUser" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="LangResultMap" type="com.starcor.admin.entity.SysOperateLang" extends="BaseResultMap">
+    <result column="lang_name" property="langName" jdbcType="VARCHAR" />
+    <result column="lang_language_code" property="languageCode" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <resultMap id="LangsResultMap" type="com.starcor.admin.entity.SysOperateLangs" extends="BaseResultMap">
+    <collection property="languages" ofType="com.starcor.admin.model.SysOperateLanguage">
+      <id column="langs_id" property="id" jdbcType="VARCHAR" />
+      <result column="langs_operate_id" property="operateId" jdbcType="VARCHAR" />
+      <result column="langs_name" property="name" jdbcType="VARCHAR" />
+      <result column="langs_language_code" property="languageCode" jdbcType="VARCHAR" />
+      <result column="langs_in_user" property="inUser" jdbcType="VARCHAR" />
+      <result column="langs_in_date" property="inDate" jdbcType="BIGINT" />
+      <result column="langs_last_edit_time" property="lastEditTime" jdbcType="BIGINT" />
+      <result column="langs_last_edit_user" property="lastEditUser" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    evs_id, evs_menu_id, evs_name, evs_code, evs_sys_operate, evs_auth_type, evs_status, 
+    evs_in_user, evs_in_date, evs_last_edit_time, evs_last_edit_user
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from evs_sys_operate
+    where evs_id = #{id,jdbcType=VARCHAR}
+  </select>
+
+  <select id="selectLangsList" resultMap="LangsResultMap" parameterType="java.util.Map">
+    select
+    operate.*,
+    langs.evs_id langs_id,
+    langs.evs_operate_id langs_operate_id,
+    langs.evs_name langs_name,
+    langs.evs_language_code langs_language_code,
+    langs.evs_in_user langs_in_user,
+    langs.evs_in_date langs_in_date,
+    langs.evs_last_edit_time langs_last_edit_time,
+    langs.evs_last_edit_user langs_last_edit_user
+    from evs_sys_operate operate
+    inner join evs_sys_operate_language langs on operate.evs_id = langs.evs_operate_id
+    <where>
+      <if test="operateId != null">
+        and operate.evs_id = #{operateId,jdbcType=VARCHAR}
+      </if>
+      <if test="code != null">
+        and operate.evs_code = #{code,jdbcType=VARCHAR}
+      </if>
+      <if test="languageCode != null">
+        and langs.evs_language_code = #{languageCode,jdbcType=VARCHAR}
+      </if>
+    </where>
+  </select>
+
+  <select id="selectList" resultMap="BaseResultMap" parameterType="java.util.Map">
+    SELECT * FROM (
+      SELECT evs_id FROM evs_sys_operate
+        <include refid="condition"/>
+        ORDER by evs_id limit #{startRow,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+        )   a
+       left JOIN evs_sys_operate b
+    on a.evs_id = b.evs_id
+  </select>
+
+  <sql id="condition">
+    <where>
+      <if test="sysOperate != null" >
+        and evs_sys_operate = #{sysOperate,jdbcType=TINYINT}
+      </if>
+      <if test="authType != null" >
+        and evs_auth_type = #{authType,jdbcType=TINYINT}
+      </if>
+       <if test="menuId != null">
+         and evs_menu_id = #{menuId,jdbcType=VARCHAR}
+       </if>
+      <if test="code != null">
+        and evs_code = #{code,jdbcType=VARCHAR}
+      </if>
+      <if test="name != null">
+        and evs_name like #{name,jdbcType=VARCHAR}
+      </if>
+     </where>
+  </sql>
+
+  <select id="selectCount" resultType="java.lang.Integer"  parameterType="java.util.Map">
+    SELECT
+      count(*)
+    FROM
+      evs_sys_operate
+    <include refid="condition"/>
+  </select>
+
+  <select id="selectLangList" resultMap="LangResultMap" parameterType="java.util.Map">
+    select
+      operate.*,
+      lang.evs_name lang_name,
+      lang.evs_language_code lang_language_code
+    from evs_sys_operate operate
+      left join evs_sys_operate_language lang on operate.evs_id = lang.evs_operate_id
+      <include refid="langCondition"/>
+      group by operate.evs_id  limit #{startRow,jdbcType=INTEGER},#{pageSize,jdbcType=INTEGER}
+  </select>
+
+  <sql id="langCondition">
+    <where>
+      <if test="sysOperate != null" >
+        and operate.evs_sys_operate = #{sysOperate,jdbcType=TINYINT}
+      </if>
+      <if test="authType != null" >
+        and operate.evs_auth_type = #{authType,jdbcType=TINYINT}
+      </if>
+      <if test="menuId != null">
+        and operate.evs_menu_id = #{menuId,jdbcType=VARCHAR}
+      </if>
+      <if test="code != null">
+        and operate.evs_code = #{code,jdbcType=VARCHAR}
+      </if>
+      <if test="name != null">
+        and operate.evs_name like #{name,jdbcType=VARCHAR}
+      </if>
+      <if test="languageCode != null">
+        and lang.evs_language_code = #{languageCode,jdbcType=VARCHAR}
+      </if>
+      <if test="langName != null">
+        and lang.evs_name like #{langName,jdbcType=VARCHAR}
+      </if>
+    </where>
+  </sql>
+
+  <select id="selectLangCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+    select
+      count(*)
+    from (select operate.evs_id,count(*) from evs_sys_operate operate
+    left join evs_sys_operate_language lang on operate.evs_id = lang.evs_operate_id
+    <include refid="langCondition"/>
+    group by operate.evs_id) as operateCount
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from evs_sys_operate
+    where evs_id = #{id,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.starcor.admin.model.SysOperate" >
+    insert into evs_sys_operate (evs_id, evs_menu_id, evs_name, 
+      evs_code, evs_sys_operate, evs_auth_type, 
+      evs_status, evs_in_user, evs_in_date, 
+      evs_last_edit_time, evs_last_edit_user)
+    values (#{id,jdbcType=VARCHAR}, #{menuId,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR},
+      #{code,jdbcType=VARCHAR}, #{sysOperate,jdbcType=TINYINT}, #{authType,jdbcType=TINYINT}, 
+      #{status,jdbcType=TINYINT}, #{inUser,jdbcType=VARCHAR}, #{inDate,jdbcType=BIGINT}, 
+      #{lastEditTime,jdbcType=BIGINT}, #{lastEditUser,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.starcor.admin.model.SysOperate" >
+    insert into evs_sys_operate
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        evs_id,
+      </if>
+      <if test="menuId != null" >
+        evs_menu_id,
+      </if>
+      <if test="name != null" >
+        evs_name,
+      </if>
+      <if test="code != null" >
+        evs_code,
+      </if>
+      <if test="sysOperate != null" >
+        evs_sys_operate,
+      </if>
+      <if test="authType != null" >
+        evs_auth_type,
+      </if>
+      <if test="status != null" >
+        evs_status,
+      </if>
+      <if test="inUser != null" >
+        evs_in_user,
+      </if>
+      <if test="inDate != null" >
+        evs_in_date,
+      </if>
+      <if test="lastEditTime != null" >
+        evs_last_edit_time,
+      </if>
+      <if test="lastEditUser != null" >
+        evs_last_edit_user,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=VARCHAR},
+      </if>
+      <if test="menuId != null" >
+        #{menuId,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null" >
+        #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="sysOperate != null" >
+        #{sysOperate,jdbcType=TINYINT},
+      </if>
+      <if test="authType != null" >
+        #{authType,jdbcType=TINYINT},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=TINYINT},
+      </if>
+      <if test="inUser != null" >
+        #{inUser,jdbcType=VARCHAR},
+      </if>
+      <if test="inDate != null" >
+        #{inDate,jdbcType=BIGINT},
+      </if>
+      <if test="lastEditTime != null" >
+        #{lastEditTime,jdbcType=BIGINT},
+      </if>
+      <if test="lastEditUser != null" >
+        #{lastEditUser,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.starcor.admin.model.SysOperate" >
+    update evs_sys_operate
+    <set >
+      <if test="menuId != null" >
+        evs_menu_id = #{menuId,jdbcType=VARCHAR},
+      </if>
+      <if test="name != null" >
+        evs_name = #{name,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        evs_code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="sysOperate != null" >
+        evs_sys_operate = #{sysOperate,jdbcType=TINYINT},
+      </if>
+      <if test="authType != null" >
+        evs_auth_type = #{authType,jdbcType=TINYINT},
+      </if>
+      <if test="status != null" >
+        evs_status = #{status,jdbcType=TINYINT},
+      </if>
+      <if test="inUser != null" >
+        evs_in_user = #{inUser,jdbcType=VARCHAR},
+      </if>
+      <if test="inDate != null" >
+        evs_in_date = #{inDate,jdbcType=BIGINT},
+      </if>
+      <if test="lastEditTime != null" >
+        evs_last_edit_time = #{lastEditTime,jdbcType=BIGINT},
+      </if>
+      <if test="lastEditUser != null" >
+        evs_last_edit_user = #{lastEditUser,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where evs_id = #{id,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.starcor.admin.model.SysOperate" >
+    update evs_sys_operate
+    set evs_menu_id = #{menuId,jdbcType=VARCHAR},
+      evs_name = #{name,jdbcType=VARCHAR},
+      evs_code = #{code,jdbcType=VARCHAR},
+      evs_sys_operate = #{sysOperate,jdbcType=TINYINT},
+      evs_auth_type = #{authType,jdbcType=TINYINT},
+      evs_status = #{status,jdbcType=TINYINT},
+      evs_in_user = #{inUser,jdbcType=VARCHAR},
+      evs_in_date = #{inDate,jdbcType=BIGINT},
+      evs_last_edit_time = #{lastEditTime,jdbcType=BIGINT},
+      evs_last_edit_user = #{lastEditUser,jdbcType=VARCHAR}
+    where evs_id = #{id,jdbcType=VARCHAR}
+  </update>
+</mapper>

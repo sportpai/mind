@@ -1,0 +1,23 @@
+server:
+  port: 8081
+  context-path: /collection
+
+#dubbo的服务消费者配置
+spring:
+  profiles:
+    active: dev
+  dubbo:
+    application:
+      name: collection
+      owner: yunlong.wang
+      organization: mind
+    scan: com.mind.*
+
+logging:
+  path: ./logs
+
+management:
+  port: 54001
+  health:
+    redis:
+      enabled: false
